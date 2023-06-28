@@ -21,31 +21,51 @@ from homeassistant.helpers import (
     config_validation as cv,
     entity_registry as er,
 )
-from homeassistant.helpers.config_validation import DEVICE_CONDITION_BASE_SCHEMA
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import get_capability, get_supported_features
 from homeassistant.helpers.typing import ConfigType, TemplateVarsType
 
 from . import DOMAIN, const
 
-CONDITION_TYPES = {"is_hvac_mode", "is_preset_mode"}
+from .const import (
+    Active,
+    CurrentState,
+    TargetState,
 
-HVAC_MODE_CONDITION = DEVICE_CONDITION_BASE_SCHEMA.extend(
+    ATTR_ACTIVE,
+    ATTR_CURRENT_STATE,
+    ATTR_TARGET_STATE,
+
+    DOMAIN
+)
+
+CONDITION_TYPES = {"is_active", "is_current_state", "is_target_state"}
+
+ACTIVE_CONDITION = cv.DEVICE_CONDITION_BASE_SCHEMA.extend(
     {
+        vol.Required(CONF_TYPE): "is_active",
         vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
-        vol.Required(CONF_TYPE): "is_hvac_mode",
-        vol.Required(const.ATTR_HVAC_MODE): vol.In(const.HVAC_MODES),
+        vol.Required(ATTR_ACTIVE): vol.In(Active),
     }
 )
 
-PRESET_MODE_CONDITION = DEVICE_CONDITION_BASE_SCHEMA.extend(
+CURRENT_STATE_CONDITION = cv.DEVICE_CONDITION_BASE_SCHEMA.extend(
     {
         vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
-        vol.Required(CONF_TYPE): "is_preset_mode",
-        vol.Required(const.ATTR_PRESET_MODE): str,
+        vol.Required(CONF_TYPE): "is_current_state",
+        vol.Required(ATTR_CURRENT_STATE): vol.In(CurrentState),
     }
 )
 
-CONDITION_SCHEMA = vol.Any(HVAC_MODE_CONDITION, PRESET_MODE_CONDITION)
+TARGET_STATE_CONDITION = cv.DEVICE_CONDITION_BASE_SCHEMA.extend(
+    {
+        vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
+        vol.Required(CONF_TYPE): "is_current_state",
+        vol.Required(ATTR_TARGET_STATE): vol.In(TargetState),
+    }
+)
+
+CONDITION_SCHEMA = vol.Any(ACTIVE_CONDITION, CURRENT_STATE_CONDITION, TARGET_STATE_CONDITION)
 
 
 async def async_get_conditions(
@@ -60,7 +80,7 @@ async def async_get_conditions(
         if entry.domain != DOMAIN:
             continue
 
-        supported_features = get_supported_features(hass, entry.entity_id)
+        # supported_features = get_supported_features(hass, entry.entity_id)
 
         base_condition = {
             CONF_CONDITION: "device",
@@ -69,10 +89,11 @@ async def async_get_conditions(
             CONF_ENTITY_ID: entry.id,
         }
 
-        conditions.append({**base_condition, CONF_TYPE: "is_hvac_mode"})
+        conditions.append({**base_condition, CONF_TYPE: "is_active"})
+        conditions.append({**base_condition, CONF_TYPE: "is_current_state"})
+        conditions.append({**base_condition, CONF_TYPE: "is_target_state"})
 
-        if supported_features & const.SUPPORT_PRESET_MODE:
-            conditions.append({**base_condition, CONF_TYPE: "is_preset_mode"})
+        # if supported_features & const.SUPPORT_PRESET_MODE:
 
     return conditions
 
@@ -91,12 +112,14 @@ def async_condition_from_config(
         if not entity_id or (state := hass.states.get(entity_id)) is None:
             return False
 
-        if config[CONF_TYPE] == "is_hvac_mode":
-            return state.state == config[const.ATTR_HVAC_MODE]
+        if config[CONF_TYPE] == "is_current_state":
+            return state.state == config[ATTR_CURRENT_STATE]
 
         return (
-            state.attributes.get(const.ATTR_PRESET_MODE)
-            == config[const.ATTR_PRESET_MODE]
+            state.attributes.get(ATTR_ACTIVE)
+                == config[ATTR_ACTIVE] and
+            state.attributes.get(ATTR_TARGET_STATE)
+                == config[ATTR_TARGET_STATE]
         )
 
     return test_is_state
@@ -110,28 +133,13 @@ async def async_get_condition_capabilities(
 
     fields = {}
 
-    if condition_type == "is_hvac_mode":
-        try:
-            entry = async_get_entity_registry_entry_or_raise(
-                hass, config[CONF_ENTITY_ID]
-            )
-            hvac_modes = (
-                get_capability(hass, entry.entity_id, const.ATTR_HVAC_MODES) or []
-            )
-        except HomeAssistantError:
-            hvac_modes = []
-        fields[vol.Required(const.ATTR_HVAC_MODE)] = vol.In(hvac_modes)
+    if condition_type == "is_active":
+        fields[vol.Required(ATTR_ACTIVE)] = vol.In(Active)
 
-    elif condition_type == "is_preset_mode":
-        try:
-            entry = async_get_entity_registry_entry_or_raise(
-                hass, config[CONF_ENTITY_ID]
-            )
-            preset_modes = (
-                get_capability(hass, entry.entity_id, const.ATTR_PRESET_MODES) or []
-            )
-        except HomeAssistantError:
-            preset_modes = []
-        fields[vol.Required(const.ATTR_PRESET_MODE)] = vol.In(preset_modes)
+    elif condition_type == "is_current_state":
+        fields[vol.Required(ATTR_CURRENT_STATE)] = vol.In(CurrentState)
+
+    elif condition_type == "is_target_state":
+        fields[vol.Required(ATTR_TARGET_STATE)] = vol.In(TargetState)
 
     return {"extra_fields": vol.Schema(fields)}

@@ -24,29 +24,57 @@ from homeassistant.helpers import config_validation as cv, entity_registry as er
 from homeassistant.helpers.trigger import TriggerActionType, TriggerInfo
 from homeassistant.helpers.typing import ConfigType
 
-from . import DOMAIN, const
+from homeassistant.const import 
+
+from .const import (
+    Active,
+    CurrentState,
+    TargetState,
+
+    ATTR_ACTIVE,
+    ATTR_CURRENT_STATE,
+    ATTR_TARGET_STATE,
+    ATTR_CURRENT_TEMPERATURE,
+
+    DOMAIN
+)
 
 TRIGGER_TYPES = {
     "current_temperature_changed",
-    "current_humidity_changed",
-    "hvac_mode_changed",
+    "current_state_changed",
+    "target_state_changed",
+    "active_changed",
 }
 
-HVAC_MODE_TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
+ACIVE_TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
     {
         vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
-        vol.Required(CONF_TYPE): "hvac_mode_changed",
-        vol.Required(state_trigger.CONF_TO): vol.In(const.HVAC_MODES),
+        vol.Required(CONF_TYPE): "active_changed",
+        vol.Required(state_trigger.CONF_TO): vol.In(Active),
     }
 )
 
-CURRENT_TRIGGER_SCHEMA = vol.All(
+CURRENT_STATE_TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
+    {
+        vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
+        vol.Required(CONF_TYPE): "current_state_changed",
+        vol.Required(state_trigger.CONF_TO): vol.In(CurrentState),
+    }
+)
+
+TARGET_STATE_TRIGGER_SCHEMA = DEVICE_TRIGGER_BASE_SCHEMA.extend(
+    {
+        vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
+        vol.Required(CONF_TYPE): "target_state_changed",
+        vol.Required(state_trigger.CONF_TO): vol.In(TargetState),
+    }
+)
+
+CURRENT_TEMPERATURE_TRIGGER_SCHEMA = vol.All(
     DEVICE_TRIGGER_BASE_SCHEMA.extend(
         {
             vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
-            vol.Required(CONF_TYPE): vol.In(
-                ["current_temperature_changed", "current_humidity_changed"]
-            ),
+            vol.Required(CONF_TYPE): "current_temperature_changed",
             vol.Optional(CONF_BELOW): vol.Any(vol.Coerce(float)),
             vol.Optional(CONF_ABOVE): vol.Any(vol.Coerce(float)),
             vol.Optional(CONF_FOR): cv.positive_time_period_dict,
@@ -55,8 +83,12 @@ CURRENT_TRIGGER_SCHEMA = vol.All(
     cv.has_at_least_one_key(CONF_BELOW, CONF_ABOVE),
 )
 
-TRIGGER_SCHEMA = vol.Any(HVAC_MODE_TRIGGER_SCHEMA, CURRENT_TRIGGER_SCHEMA)
-
+TRIGGER_SCHEMA = vol.Any(
+    ACIVE_TRIGGER_SCHEMA,
+    CURRENT_STATE_TRIGGER_SCHEMA,
+    TARGET_STATE_TRIGGER_SCHEMA,
+    CURRENT_TEMPERATURE_TRIGGER_SCHEMA
+)
 
 async def async_get_triggers(
     hass: HomeAssistant, device_id: str
@@ -83,25 +115,30 @@ async def async_get_triggers(
         triggers.append(
             {
                 **base_trigger,
-                CONF_TYPE: "hvac_mode_changed",
+                CONF_TYPE: "active_changed",
             }
         )
 
-        if state and const.ATTR_CURRENT_TEMPERATURE in state.attributes:
-            triggers.append(
-                {
-                    **base_trigger,
-                    CONF_TYPE: "current_temperature_changed",
-                }
-            )
+        triggers.append(
+            {
+                **base_trigger,
+                CONF_TYPE: "current_state_changed",
+            }
+        )
 
-        if state and const.ATTR_CURRENT_HUMIDITY in state.attributes:
-            triggers.append(
-                {
-                    **base_trigger,
-                    CONF_TYPE: "current_humidity_changed",
-                }
-            )
+        triggers.append(
+            {
+                **base_trigger,
+                CONF_TYPE: "target_state_changed",
+            }
+        )
+
+        triggers.append(
+            {
+                **base_trigger,
+                CONF_TYPE: "current_temperature_changed",
+            }
+        )
 
     return triggers
 
@@ -113,17 +150,18 @@ async def async_attach_trigger(
     trigger_info: TriggerInfo,
 ) -> CALLBACK_TYPE:
     """Attach a trigger."""
-    if (trigger_type := config[CONF_TYPE]) == "hvac_mode_changed":
+    if (trigger_type := config[CONF_TYPE]) == "current_state_changed":
         state_config = {
             state_trigger.CONF_PLATFORM: "state",
             state_trigger.CONF_ENTITY_ID: config[CONF_ENTITY_ID],
             state_trigger.CONF_TO: config[state_trigger.CONF_TO],
             state_trigger.CONF_FROM: [
-                mode
-                for mode in const.HVAC_MODES
-                if mode != config[state_trigger.CONF_TO]
+                value
+                for value in CurrentState
+                if value != config[state_trigger.CONF_TO]
             ],
         }
+    
         if CONF_FOR in config:
             state_config[CONF_FOR] = config[CONF_FOR]
         state_config = await state_trigger.async_validate_trigger_config(
@@ -142,10 +180,7 @@ async def async_attach_trigger(
         numeric_state_config[
             numeric_state_trigger.CONF_VALUE_TEMPLATE
         ] = "{{ state.attributes.current_temperature }}"
-    else:
-        numeric_state_config[
-            numeric_state_trigger.CONF_VALUE_TEMPLATE
-        ] = "{{ state.attributes.current_humidity }}"
+
 
     if CONF_ABOVE in config:
         numeric_state_config[CONF_ABOVE] = config[CONF_ABOVE]
@@ -168,34 +203,29 @@ async def async_get_trigger_capabilities(
     """List trigger capabilities."""
     trigger_type = config[CONF_TYPE]
 
-    if trigger_type == "hvac_action_changed":
+    if trigger_type == "active_changed":
         return {}
 
-    if trigger_type == "hvac_mode_changed":
+    if trigger_type == "current_state_change":
+        return {}
+
+    if trigger_type == "target_state_change":
+        return {}
+
+    if trigger_type == "current_temperature_changed":
+        unit_of_measurement: str = hass.config.units.temperature_unit
         return {
             "extra_fields": vol.Schema(
                 {
-                    vol.Required(state_trigger.CONF_TO): vol.In(const.HVAC_MODES),
+                    vol.Optional(
+                        CONF_ABOVE, description={"suffix": unit_of_measurement}
+                    ): vol.Coerce(float),
+                    vol.Optional(
+                        CONF_BELOW, description={"suffix": unit_of_measurement}
+                    ): vol.Coerce(float),
                     vol.Optional(CONF_FOR): cv.positive_time_period_dict,
                 }
             )
         }
 
-    if trigger_type == "current_temperature_changed":
-        unit_of_measurement: str = hass.config.units.temperature_unit
-    else:
-        unit_of_measurement = PERCENTAGE
-
-    return {
-        "extra_fields": vol.Schema(
-            {
-                vol.Optional(
-                    CONF_ABOVE, description={"suffix": unit_of_measurement}
-                ): vol.Coerce(float),
-                vol.Optional(
-                    CONF_BELOW, description={"suffix": unit_of_measurement}
-                ): vol.Coerce(float),
-                vol.Optional(CONF_FOR): cv.positive_time_period_dict,
-            }
-        )
-    }
+    return {}

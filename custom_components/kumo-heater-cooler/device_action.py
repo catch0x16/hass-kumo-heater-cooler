@@ -15,33 +15,42 @@ from homeassistant.const import (
     CONF_TYPE,
 )
 from homeassistant.core import Context, HomeAssistant
-from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import entity_registry as er
 import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.entity import get_capability, get_supported_features
 from homeassistant.helpers.typing import ConfigType, TemplateVarsType
 
-from . import DOMAIN, const
+from .const import (
+    Active,
+    TargetState,
 
-ACTION_TYPES = {"set_hvac_mode", "set_preset_mode"}
+    ATTR_ACTIVE,
+    ATTR_TARGET_STATE,
 
-SET_HVAC_MODE_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
+    DOMAIN,
+
+    SERVICE_SET_ACTIVE,
+    SERVICE_SET_TARGET_STATE
+)
+
+ACTION_TYPES = {SERVICE_SET_ACTIVE, SERVICE_SET_TARGET_STATE}
+
+SET_ACTIVE_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
     {
-        vol.Required(CONF_TYPE): "set_hvac_mode",
+        vol.Required(CONF_TYPE): "set_active",
         vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
-        vol.Required(const.ATTR_HVAC_MODE): vol.In(const.HVAC_MODES),
+        vol.Required(ATTR_ACTIVE): vol.In(Active),
     }
 )
 
-SET_PRESET_MODE_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
+SET_TARGET_STATE_SCHEMA = cv.DEVICE_ACTION_BASE_SCHEMA.extend(
     {
-        vol.Required(CONF_TYPE): "set_preset_mode",
+        vol.Required(CONF_TYPE): "set_target_state",
         vol.Required(CONF_ENTITY_ID): cv.entity_id_or_uuid,
-        vol.Required(const.ATTR_PRESET_MODE): str,
+        vol.Required(ATTR_TARGET_STATE): vol.In(TargetState),
     }
 )
 
-_ACTION_SCHEMA = vol.Any(SET_HVAC_MODE_SCHEMA, SET_PRESET_MODE_SCHEMA)
+_ACTION_SCHEMA = vol.Any(SET_ACTIVE_SCHEMA, SET_TARGET_STATE_SCHEMA)
 
 
 async def async_validate_action_config(
@@ -63,7 +72,8 @@ async def async_get_actions(
         if entry.domain != DOMAIN:
             continue
 
-        supported_features = get_supported_features(hass, entry.entity_id)
+        # TODO: Add more features
+        # supported_features = get_supported_features(hass, entry.entity_id)
 
         base_action = {
             CONF_DEVICE_ID: device_id,
@@ -71,9 +81,10 @@ async def async_get_actions(
             CONF_ENTITY_ID: entry.id,
         }
 
-        actions.append({**base_action, CONF_TYPE: "set_hvac_mode"})
-        if supported_features & const.SUPPORT_PRESET_MODE:
-            actions.append({**base_action, CONF_TYPE: "set_preset_mode"})
+        actions.append({**base_action, CONF_TYPE: SERVICE_SET_ACTIVE})
+        actions.append({**base_action, CONF_TYPE: SERVICE_SET_TARGET_STATE})
+        # TODO: Add more features
+        # if supported_features & const.SUPPORT_PRESET_MODE:
 
     return actions
 
@@ -87,12 +98,12 @@ async def async_call_action_from_config(
     """Execute a device action."""
     service_data = {ATTR_ENTITY_ID: config[CONF_ENTITY_ID]}
 
-    if config[CONF_TYPE] == "set_hvac_mode":
-        service = const.SERVICE_SET_HVAC_MODE
-        service_data[const.ATTR_HVAC_MODE] = config[const.ATTR_HVAC_MODE]
-    elif config[CONF_TYPE] == "set_preset_mode":
-        service = const.SERVICE_SET_PRESET_MODE
-        service_data[const.ATTR_PRESET_MODE] = config[const.ATTR_PRESET_MODE]
+    if config[CONF_TYPE] == SERVICE_SET_ACTIVE:
+        service = SERVICE_SET_ACTIVE
+        service_data[ATTR_ACTIVE] = config[ATTR_ACTIVE]
+    elif config[CONF_TYPE] == SERVICE_SET_TARGET_STATE:
+        service =SERVICE_SET_TARGET_STATE
+        service_data[ATTR_TARGET_STATE] = config[ATTR_TARGET_STATE]
 
     await hass.services.async_call(
         DOMAIN, service, service_data, blocking=True, context=context
@@ -104,27 +115,12 @@ async def async_get_action_capabilities(
 ) -> dict[str, vol.Schema]:
     """List action capabilities."""
     action_type = config[CONF_TYPE]
-    entity_id_or_uuid = config[CONF_ENTITY_ID]
 
     fields = {}
 
-    if action_type == "set_hvac_mode":
-        try:
-            entry = async_get_entity_registry_entry_or_raise(hass, entity_id_or_uuid)
-            hvac_modes = (
-                get_capability(hass, entry.entity_id, const.ATTR_HVAC_MODES) or []
-            )
-        except HomeAssistantError:
-            hvac_modes = []
-        fields[vol.Required(const.ATTR_HVAC_MODE)] = vol.In(hvac_modes)
-    elif action_type == "set_preset_mode":
-        try:
-            entry = async_get_entity_registry_entry_or_raise(hass, entity_id_or_uuid)
-            preset_modes = (
-                get_capability(hass, entry.entity_id, const.ATTR_PRESET_MODES) or []
-            )
-        except HomeAssistantError:
-            preset_modes = []
-        fields[vol.Required(const.ATTR_PRESET_MODE)] = vol.In(preset_modes)
+    if action_type == SERVICE_SET_ACTIVE:
+        fields[vol.Required(ATTR_ACTIVE)] = vol.In(Active)
+    elif action_type == SERVICE_SET_TARGET_STATE:
+        fields[vol.Required(ATTR_TARGET_STATE)] = vol.In(TargetState)
 
     return {"extra_fields": vol.Schema(fields)}
