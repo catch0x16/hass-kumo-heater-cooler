@@ -113,7 +113,7 @@ SCAN_INTERVAL = timedelta(seconds=60)
 CONVERTIBLE_ATTRIBUTE = [ATTR_TEMPERATURE, ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH]
 
 _LOGGER = logging.getLogger(__name__)
-
+_LOGGER.warning("Initializing Heater/Cooler component")
 
 SET_TEMPERATURE_SCHEMA = vol.All(
     cv.has_at_least_one_key(
