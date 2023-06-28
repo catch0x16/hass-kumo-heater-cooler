@@ -134,6 +134,7 @@ SET_TEMPERATURE_SCHEMA = vol.All(
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up heater/cooler entities."""
+    _LOGGER.warning("Heater/Cooler service starting")
     component = hass.data[DOMAIN] = EntityComponent[HeaterCoolerEntity](
         _LOGGER, DOMAIN, hass, SCAN_INTERVAL
     )
@@ -186,6 +187,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         [HeaterCoolerEntityFeature.SWING_MODE],
     )
 
+    _LOGGER.warning("Heater/Cooler service started")
     return True
 
 
