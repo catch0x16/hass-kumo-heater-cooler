@@ -113,7 +113,6 @@ SCAN_INTERVAL = timedelta(seconds=60)
 CONVERTIBLE_ATTRIBUTE = [ATTR_TEMPERATURE, ATTR_TARGET_TEMP_LOW, ATTR_TARGET_TEMP_HIGH]
 
 _LOGGER = logging.getLogger(__name__)
-_LOGGER.warning("Initializing Heater/Cooler component")
 
 SET_TEMPERATURE_SCHEMA = vol.All(
     cv.has_at_least_one_key(
@@ -134,11 +133,12 @@ SET_TEMPERATURE_SCHEMA = vol.All(
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up heater/cooler entities."""
-    _LOGGER.warning("Heater/Cooler service starting")
     component = hass.data[DOMAIN] = EntityComponent[HeaterCoolerEntity](
         _LOGGER, DOMAIN, hass, SCAN_INTERVAL
     )
     await component.async_setup(config)
+
+    _LOGGER.warning("Heater/Cooler service starting")
 
     component.async_register_entity_service(SERVICE_TURN_ON, {}, "async_turn_on")
     component.async_register_entity_service(SERVICE_TURN_OFF, {}, "async_turn_off")
