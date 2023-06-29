@@ -10,6 +10,7 @@ set_active:
     active:
       name: Active
       description: New value of heater/cooler on or off.
+      required: true
       selector:
         select:
           options:
@@ -20,14 +21,15 @@ set_active:
 
 set_target_state:
   name: Set Target State
-  description: Set target HVAC operation mode for heater/cooler device.
+  description: Set target state for heater/cooler device.
   target:
     entity:
       domain: heater_cooler
   fields:
     target_state:
-      name: HVAC mode
-      description: New value of operation mode.
+      name: Target State
+      description: New value of target state.
+      required: true
       selector:
         select:
           options:
@@ -38,24 +40,3 @@ set_target_state:
             - label: "Heat"
               value: 2
 
-set_temperature:
-  name: Set Temperature
-  description: Set target temperature of heater/cooler device.
-  target:
-    entity:
-      domain: heater_cooler
-      supported_features:
-        - heater_cooler.HeaterCoolerEntityFeature.TARGET_TEMPERATURE
-  fields:
-    temperature:
-      name: Temperature
-      description: New target temperature for HVAC.
-      filter:
-        supported_features:
-          - heater_cooler.HeaterCoolerEntityFeature.TARGET_TEMPERATURE
-      selector:
-        number:
-          min: 0
-          max: 250
-          step: 0.1
-          mode: box
