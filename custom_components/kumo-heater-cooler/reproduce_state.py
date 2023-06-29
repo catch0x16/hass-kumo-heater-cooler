@@ -9,10 +9,7 @@ from homeassistant.const import ATTR_TEMPERATURE
 from homeassistant.core import Context, HomeAssistant, State
 
 from .const import (
-    CurrentState,
-
     ATTR_ACTIVE,
-    ATTR_CURRENT_STATE,
     ATTR_TARGET_STATE,
 
     DOMAIN,
@@ -43,14 +40,11 @@ async def _async_reproduce_states(
             DOMAIN, service, data, blocking=True, context=context
         )
 
-    if state.state in CurrentState:
-        await call_service(SERVICE_SET_CURRENT_STATE, [], {ATTR_CURRENT_STATE: state.state})
+    if ATTR_ACTIVE in state.attributes:
+        await call_service(SERVICE_SET_ACTIVE, [ATTR_ACTIVE])
 
     if ATTR_TARGET_STATE in state.attributes:
         await call_service(SERVICE_SET_TARGET_STATE, [ATTR_TARGET_STATE])
-
-    if ATTR_ACTIVE in state.attributes:
-        await call_service(SERVICE_SET_ACTIVE, [ATTR_ACTIVE])
 
     if ATTR_TEMPERATURE in state.attributes:
         await call_service(SERVICE_SET_TEMPERATURE, [ATTR_TEMPERATURE])

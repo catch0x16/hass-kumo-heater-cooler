@@ -1,14 +1,14 @@
 # Describes the format for available heater/cooler services
 
 set_active:
-  name: Set heater/cooler active
+  name: Set Active
   description: Turn heater/cooler device on or off.
   target:
     entity:
       domain: heater_cooler
 
 set_target_state:
-  name: Set target HVAC state
+  name: Set Target State
   description: Set target HVAC operation mode for heater/cooler device.
   target:
     entity:
@@ -28,7 +28,7 @@ set_target_state:
               value: "2"
 
 set_temperature:
-  name: Set temperature
+  name: Set Temperature
   description: Set target temperature of heater/cooler device.
   target:
     entity:
