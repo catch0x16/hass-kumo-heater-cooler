@@ -1,7 +1,6 @@
 """Provides the constants needed for component."""
 
 from enum import IntFlag
-from datetime import timedelta
 
 class CurrentState(IntFlag):
     """Current state enum for heater/cooler devices."""
@@ -35,8 +34,6 @@ DEFAULT_MIN_HUMIDITY = 30
 DEFAULT_MAX_HUMIDITY = 99
 
 DOMAIN = "heater_cooler"
-
-SCAN_INTERVAL = timedelta(seconds=60)
 
 SERVICE_SET_ACTIVE = "set_active"
 SERVICE_SET_TARGET_STATE = "set_target_state"
