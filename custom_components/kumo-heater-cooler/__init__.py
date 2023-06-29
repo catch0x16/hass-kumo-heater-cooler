@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timedelta
 import functools as ft
 import logging
 from typing import Any, final
@@ -55,7 +54,6 @@ DEFAULT_MIN_HUMIDITY = 30
 DEFAULT_MAX_HUMIDITY = 99
 
 ENTITY_ID_FORMAT = DOMAIN + ".{}"
-SCAN_INTERVAL = timedelta(seconds=60)
 
 CONVERTIBLE_ATTRIBUTE = []
 
