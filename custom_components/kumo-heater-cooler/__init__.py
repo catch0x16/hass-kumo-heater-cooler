@@ -177,6 +177,7 @@ class HeaterCoolerEntity(Entity):
             ),
             ATTR_ACTIVE: self._attr_active,
             ATTR_CURRENT_STATE: self._attr_current_state,
+            ATTR_TARGET_STATE: self._attr_target_state,
             ATTR_CURRENT_TEMPERATURE: self._attr_current_temperature
         }
 
