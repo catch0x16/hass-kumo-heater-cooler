@@ -1,7 +1,7 @@
 {
-  "name": "Mitsubishi Kumo Cloud - Heater-Cooler",
+  "name": "Heater-Cooler Integration",
   "render_readme": true,
-  "domains": ["heater_cooler", "kumo"],
+  "domains": ["heater_cooler"],
   "homeassistant": "0.96.0",
   "iot_class": "local_poll"
 }

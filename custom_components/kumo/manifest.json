@@ -2,7 +2,7 @@
     "domain": "kumo",
     "name": "Kumo",
     "config_flow": true,
-    "documentation": "https://github.com/catch0x16/hass-kumo",
+    "documentation": "https://github.com/catch0x16/hass-kumo-heater-cooler",
     "dependencies": [],
     "codeowners": [ "@catch0x16" ],
     "requirements": ["pykumo==0.3.5"],
