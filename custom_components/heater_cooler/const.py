@@ -39,8 +39,6 @@ SERVICE_SET_ACTIVE = "set_active"
 SERVICE_SET_TARGET_STATE = "set_target_state"
 SERVICE_SET_TEMPERATURE = "set_temperature"
 
-KUMO_CONFIG_CACHE = "kumo_cache.json"
-
 class HeaterCoolerEntityFeature(IntFlag):
     """Supported features of the heater/cooler entity."""
 
