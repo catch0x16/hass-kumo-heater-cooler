@@ -6,6 +6,17 @@ set_active:
   target:
     entity:
       domain: heater_cooler
+  fields:
+    active:
+      name: Active
+      description: New value of heater/cooler on or off.
+      selector:
+        select:
+          options:
+            - label: "Active"
+              value: 0
+            - label: "Invactive"
+              value: 1
 
 set_target_state:
   name: Set Target State
