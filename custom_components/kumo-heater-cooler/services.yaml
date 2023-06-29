@@ -21,11 +21,11 @@ set_target_state:
         select:
           options:
             - label: "Auto"
-              value: "0"
+              value: 0
             - label: "Cool"
-              value: "1"
+              value: 1
             - label: "Heat"
-              value: "2"
+              value: 2
 
 set_temperature:
   name: Set Temperature
