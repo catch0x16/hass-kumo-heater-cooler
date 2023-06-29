@@ -130,7 +130,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 class HeaterCoolerEntityDescription(EntityDescription):
     """A class that describes heater/cooler entities."""
 
-
 class HeaterCoolerEntity(Entity):
     """Base class for heater/cooler entities."""
 

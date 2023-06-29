@@ -1,6 +1,6 @@
 {
     "domain": "heater_cooler",
-    "name": "heater_cooler",
+    "name": "HeaterCooler",
     "codeowners": ["@catch0x16"],
     "documentation": "https://github.com/catch0x16/hass-kumo-heater-cooler",
     "dependencies": [],
