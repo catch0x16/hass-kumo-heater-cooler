@@ -11,20 +11,11 @@ import voluptuous as vol
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-    ATTR_TEMPERATURE,
-    PRECISION_TENTHS,
-    PRECISION_WHOLE,
-    SERVICE_TURN_OFF,
-    SERVICE_TURN_ON,
-    STATE_OFF,
-    STATE_ON,
-    UnitOfTemperature,
+    ATTR_TEMPERATURE
 )
 from homeassistant.core import HomeAssistant, ServiceCall
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.config_validation import (  # noqa: F401
-    PLATFORM_SCHEMA,
-    PLATFORM_SCHEMA_BASE,
     make_entity_service_schema,
 )
 from homeassistant.helpers.entity import Entity, EntityDescription
@@ -89,8 +80,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     _LOGGER.warning("Heater/Cooler service starting")
 
-    component.async_register_entity_service(SERVICE_TURN_ON, {}, "async_turn_on")
-    component.async_register_entity_service(SERVICE_TURN_OFF, {}, "async_turn_off")
     component.async_register_entity_service(
         SERVICE_SET_ACTIVE,
         {vol.Required(ATTR_ACTIVE): vol.Coerce(Active)},
