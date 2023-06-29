@@ -5,7 +5,10 @@
     "documentation": "https://github.com/catch0x16/hass-kumo-heater-cooler",
     "dependencies": [],
     "codeowners": [ "@catch0x16" ],
-    "requirements": ["pykumo==0.3.5"],
+    "requirements": [
+        "pykumo==0.3.5",
+        "git+https://github.com/catch0x16/hass-heater-cooler.git@main"
+    ],
     "version": "0.3.6",
     "homeassistant": "2021.12.0"
 }
