@@ -224,18 +224,17 @@ class HeaterCoolerEntity(Entity):
         """Set new target hvac mode."""
         raise NotImplementedError()
 
-    async def async_set_hvac_mode(self, active: Active) -> None:
+    async def async_set_active(self, active: Active) -> None:
         """Set new target hvac mode."""
         await self.hass.async_add_executor_job(self.set_active, active)
 
-    async def async_turn_on(self) -> None:
-        """Turn the entity on."""
+    def set_target_state(self, target_state: TargetState) -> None:
+        """Set new target hvac mode."""
         raise NotImplementedError()
 
-    async def async_turn_off(self) -> None:
-        """Turn the entity off."""
-        raise NotImplementedError()
-
+    async def async_set_target_state(self, target_state: TargetState) -> None:
+        """Set new target hvac mode."""
+        await self.hass.async_add_executor_job(self.set_target_state, target_state)
 
 async def async_service_temperature_set(
     entity: HeaterCoolerEntity, service_call: ServiceCall
